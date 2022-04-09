@@ -6,6 +6,19 @@ Assignment 1
 March 2021
 """
 
+class Cart:
+    def __init__(self, cart_id):
+        self.cart_id = cart_id
+        self.products = []
+
+    def add_product(self, product):
+        pass
+
+    def remove_product(self, product):
+        pass
+
+    def get_products(self):
+        return self.products
 
 class Marketplace:
     """
@@ -19,13 +32,25 @@ class Marketplace:
         :type queue_size_per_producer: Int
         :param queue_size_per_producer: the maximum size of a queue associated with each producer
         """
-        pass
+        self.qsize = queue_size_per_producer
+        self.carts = []
+        self.current_id_producer = 0
+        self.producers = []
+        self.current_cart_id = 0
 
     def register_producer(self):
         """
         Returns an id for the producer that calls this.
         """
-        pass
+
+        id_producer = self.current_id_producer
+        """
+        cum arata lista de producatori
+        producers[id_producer] = [produse]
+        """
+        self.producers.append([])
+        self.current_id_producer += 1
+        return id_producer
 
     def publish(self, producer_id, product):
         """
@@ -39,7 +64,16 @@ class Marketplace:
 
         :returns True or False. If the caller receives False, it should wait and then try again.
         """
-        pass
+        print(f"{producer_id} publica {product}")
+        if len(self.producers[int(producer_id)]) > self.qsize:
+            return False
+
+        self.producers[int(producer_id)].append(product)
+
+        for i in range(len(self.producers)):
+            print(i)
+            print(self.producers[i])
+        return True
 
     def new_cart(self):
         """
@@ -47,7 +81,12 @@ class Marketplace:
 
         :returns an int representing the cart_id
         """
-        pass
+        cart_id = self.current_cart_id
+        self.current_cart_id += 1
+        # create new Cart
+        c = Cart(cart_id)
+        self.carts.append(c)
+        return cart_id
 
     def add_to_cart(self, cart_id, product):
         """
@@ -61,7 +100,7 @@ class Marketplace:
 
         :returns True or False. If the caller receives False, it should wait and then try again
         """
-        pass
+        return self.carts[cart_id].add_product(product)
 
     def remove_from_cart(self, cart_id, product):
         """
@@ -73,7 +112,7 @@ class Marketplace:
         :type product: Product
         :param product: the product to remove from cart
         """
-        pass
+        self.carts[cart_id].remove_product(product)
 
     def place_order(self, cart_id):
         """
@@ -82,4 +121,4 @@ class Marketplace:
         :type cart_id: Int
         :param cart_id: id cart
         """
-        pass
+        return self.carts[cart_id].get_products()
