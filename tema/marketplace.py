@@ -5,20 +5,7 @@ Computer Systems Architecture Course
 Assignment 1
 March 2021
 """
-
-class Cart:
-    def __init__(self, cart_id):
-        self.cart_id = cart_id
-        self.products = []
-
-    def add_product(self, product):
-        pass
-
-    def remove_product(self, product):
-        pass
-
-    def get_products(self):
-        return self.products
+from threading import Lock
 
 class Marketplace:
     """
@@ -34,23 +21,26 @@ class Marketplace:
         """
         self.qsize = queue_size_per_producer
         self.carts = []
-        self.current_id_producer = 0
+        self.current_cart_id = -1
+        self.new_cart_lock = Lock()
+
+        self.current_id_producer = -1
         self.producers = []
-        self.current_cart_id = 0
+        self.producers_register_lock = Lock()
 
     def register_producer(self):
         """
         Returns an id for the producer that calls this.
         """
-
-        id_producer = self.current_id_producer
+        with self.producers_register_lock:
+            self.current_id_producer += 1
         """
         cum arata lista de producatori
         producers[id_producer] = [produse]
         """
         self.producers.append([])
-        self.current_id_producer += 1
-        return id_producer
+
+        return self.current_id_producer
 
     def publish(self, producer_id, product):
         """
@@ -81,12 +71,12 @@ class Marketplace:
 
         :returns an int representing the cart_id
         """
-        cart_id = self.current_cart_id
-        self.current_cart_id += 1
-        # create new Cart
-        c = Cart(cart_id)
+        with self.new_cart_lock:
+            self.current_cart_id += 1
+            c = {self.current_cart_id: []}
+
         self.carts.append(c)
-        return cart_id
+        return self.current_cart_id
 
     def add_to_cart(self, cart_id, product):
         """
@@ -100,6 +90,8 @@ class Marketplace:
 
         :returns True or False. If the caller receives False, it should wait and then try again
         """
+        # daca elementul e blocat, returneaza fals
+        # daca nu e blocat, adauga in cart si blocheaza-l
         return self.carts[cart_id].add_product(product)
 
     def remove_from_cart(self, cart_id, product):
@@ -112,7 +104,9 @@ class Marketplace:
         :type product: Product
         :param product: the product to remove from cart
         """
-        self.carts[cart_id].remove_product(product)
+        # deblocheaza produsul si baga-l inapoi
+        # self.carts[cart_id].remove_product(product)
+        pass
 
     def place_order(self, cart_id):
         """
@@ -121,4 +115,5 @@ class Marketplace:
         :type cart_id: Int
         :param cart_id: id cart
         """
-        return self.carts[cart_id].get_products()
+        pass
+        # return self.carts[cart_id].get_products()
