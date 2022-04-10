@@ -38,28 +38,21 @@ class Producer(Thread):
         self.wait_time = republish_wait_time
         self.id = marketplace.register_producer()
         self.name = kwargs['name']
-        # print("argumente")
-        # for arg in kwargs:
-        #     print(arg)
-        # print(self.products)
 
     def run(self):
-        # print(self.products)
-        # print(len(self.products))
-
-        # while True:
-        for (product, no_products, wait_time) in self.products:
-            print(product)
-            # print(no_products)
-            # print(wait_time)
-            for i in range(0, no_products):
-                # publica produsul
-                published = self.marketplace.publish(self.id, product)
-                while not published:
-                    # sleep + reincearca sa publici
-                    sleep(wait_time)
-                    # print("no se puede")
+        while True:
+            for (product, no_products, wait_time) in self.products:
+                # print(f"{product.name} in cantitate {no_products}")
+                for i in range(no_products):
+                    # publica produsul
+                    # print(f"public {i} produs cu numele {product.name}")
                     published = self.marketplace.publish(self.id, product)
-
-                # print("ok am publicat")
-                sleep(wait_time)
+                    # print(f"rezultat publicare: {published}")
+                    while not published:
+                        # sleep + reincearca sa publici
+                        sleep(wait_time)
+                        published = self.marketplace.publish(self.id, product)
+                        # if published:
+                            # print(f"am publicat {product.name}")
+                    # print(f"am publicat {product.name}")
+                # sleep(wait_time)

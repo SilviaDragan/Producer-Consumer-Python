@@ -28,6 +28,9 @@ class Marketplace:
         self.producers = []
         self.producers_register_lock = Lock()
 
+        self.product_add_lock = Lock()
+        self.product_remove_lock = Lock()
+
     def register_producer(self):
         """
         Returns an id for the producer that calls this.
@@ -39,7 +42,6 @@ class Marketplace:
         producers[id_producer] = [produse]
         """
         self.producers.append([])
-
         return self.current_id_producer
 
     def publish(self, producer_id, product):
@@ -54,15 +56,12 @@ class Marketplace:
 
         :returns True or False. If the caller receives False, it should wait and then try again.
         """
-        print(f"{producer_id} publica {product}")
+        # print(f"{producer_id} publica {product}")
         if len(self.producers[int(producer_id)]) > self.qsize:
             return False
 
         self.producers[int(producer_id)].append(product)
-
-        for i in range(len(self.producers)):
-            print(i)
-            print(self.producers[i])
+        # print(f"lista produceri: {self.producers}")
         return True
 
     def new_cart(self):
@@ -73,9 +72,11 @@ class Marketplace:
         """
         with self.new_cart_lock:
             self.current_cart_id += 1
-            c = {self.current_cart_id: []}
+            c = []
 
         self.carts.append(c)
+        # print("cart id= ", end='')
+        # print(self.current_cart_id)
         return self.current_cart_id
 
     def add_to_cart(self, cart_id, product):
@@ -92,7 +93,21 @@ class Marketplace:
         """
         # daca elementul e blocat, returneaza fals
         # daca nu e blocat, adauga in cart si blocheaza-l
-        return self.carts[cart_id].add_product(product)
+        # print(f"adaug {product.name } in {cart_id}")
+        cart = self.carts[cart_id]
+        with self.product_add_lock:
+            # remove item from producer's list
+            producer = 0
+            for producer in range(len(self.producers)):
+                if product in self.producers[producer]:
+                    # print(f"am gasit produsul {product.name} la {producer}")
+                    self.producers[producer].remove(product)
+                    break
+            if producer == len(self.producers):
+                return False
+        product_with_producer = tuple((product, producer))
+        cart.append(product_with_producer)
+        return True
 
     def remove_from_cart(self, cart_id, product):
         """
@@ -104,9 +119,19 @@ class Marketplace:
         :type product: Product
         :param product: the product to remove from cart
         """
-        # deblocheaza produsul si baga-l inapoi
-        # self.carts[cart_id].remove_product(product)
-        pass
+        # print(f"sterg {product.name } in {cart_id}")
+        cart = self.carts[cart_id]
+        # return product to producer
+        # print(f"cart: {cart}")
+        with self.product_remove_lock:
+            for elem in cart:
+                if elem[0].name == product.name:
+                    producer = elem[1]
+                    self.producers[producer].append(product)
+                    # print(f"elem= {elem[0]}, {elem[1]}")
+                    cart.remove(elem)
+                    break
+
 
     def place_order(self, cart_id):
         """
@@ -115,5 +140,5 @@ class Marketplace:
         :type cart_id: Int
         :param cart_id: id cart
         """
-        pass
-        # return self.carts[cart_id].get_products()
+        # print("place order")
+        return self.carts[cart_id]

@@ -37,25 +37,25 @@ class Consumer(Thread):
         self.market = marketplace
         self.wait_time = retry_wait_time
         self.name = kwargs['name']
-        # print("argumente:")
-        # for arg in kwargs:
-        #     print(arg)
+
 
     def run(self):
         for cart in self.carts:
             cid = self.market.new_cart()
             for action in cart:
                 # verifica daca type e add sau remove
-                if action["type"] == "add":
-                    print("add")
-                    while not self.market.add_to_cart(cid, action["product"]):
-                        sleep(self.wait_time)
-                elif action["type"] == "remove":
-                    print("remove")
-                    self.market.remove_from_cart(cid, action["product"])
+                for i in range(int(action["quantity"])):
+                    if action["type"] == "add":
+                        # print("add")
+                        added = self.market.add_to_cart(cid, action["product"])
+                        while not added:
+                            sleep(self.wait_time)
+                            added = self.market.add_to_cart(cid, action["product"])
+                    elif action["type"] == "remove":
+                        # print("remove")
+                        self.market.remove_from_cart(cid, action["product"])
 
-            # products = self.market.place_order(cid)
-            #
-            # for p in products:
-            #     print(f"{self.name} bought {p}")
+            products = self.market.place_order(cid)
+            for p in products:
+                print(f"{self.name} bought {p[0]}")
 
